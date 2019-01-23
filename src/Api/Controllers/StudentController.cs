@@ -167,7 +167,7 @@ namespace Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(long id, [FromBody] StudentDto dto)
+        public IActionResult EditPersonalInfo(long id, [FromBody] StudentPersonalInfoDto dto)
         {
             Student student = _studentRepository.GetById(id);
             if (student == null)
@@ -176,10 +176,7 @@ namespace Api.Controllers
             student.Name = dto.Name;
             student.Email = dto.Email;
 
-            Enrollment firstEnrollment = student.FirstEnrollment;
-            Enrollment secondEnrollment = student.SecondEnrollment;
-
-           _unitOfWork.Commit();
+            _unitOfWork.Commit();
 
             return Ok();
         }
