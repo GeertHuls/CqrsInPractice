@@ -36,14 +36,11 @@ namespace Logic.Students
             return null;
         }
 
-        public virtual void RemoveEnrollment(Enrollment enrollment)
+        public virtual void RemoveEnrollment(Enrollment enrollment, string comment)
         {
             _enrollments.Remove(enrollment);
-        }
-
-        public virtual void AddDisenrollmentComment(Enrollment enrollment, string comment)
-        {
-            var disenrollment = new Disenrollment(enrollment.Student, enrollment.Course, comment);
+            var disenrollment = new Disenrollment(enrollment.Student,
+                enrollment.Course, comment);
             _disenrollments.Add(disenrollment);
         }
 
