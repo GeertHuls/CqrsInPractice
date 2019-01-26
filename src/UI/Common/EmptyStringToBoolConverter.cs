@@ -11,7 +11,7 @@ namespace UI.Common
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var stringValue = (string)value;
-            return string.IsNullOrWhiteSpace(stringValue) ? Visibility.Visible : Visibility.Hidden;
+            return string.IsNullOrWhiteSpace(stringValue) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -26,7 +26,7 @@ namespace UI.Common
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var stringValue = (string)value;
-            return string.IsNullOrWhiteSpace(stringValue) ? Visibility.Hidden : Visibility.Visible;
+            return string.IsNullOrWhiteSpace(stringValue) ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

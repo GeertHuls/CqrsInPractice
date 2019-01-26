@@ -25,21 +25,39 @@ namespace UI.Api
             return result.Value;
         }
 
-        public static async Task<Result> Create(StudentDto dto)
+        public static async Task<Result> Register(NewStudentDto dto)
         {
             Result result = await SendRequest<string>("/", HttpMethod.Post, dto).ConfigureAwait(false);
             return result;
         }
 
-        public static async Task<Result> Update(StudentDto dto)
+        public static async Task<Result> Unregister(long id)
+        {
+            Result result = await SendRequest<string>("/" + id, HttpMethod.Delete).ConfigureAwait(false);
+            return result;
+        }
+
+        public static async Task<Result> EditPersonalInfo(PersonalInfoDto dto)
         {
             Result result = await SendRequest<string>("/" + dto.Id, HttpMethod.Put, dto).ConfigureAwait(false);
             return result;
         }
 
-        public static async Task<Result> Delete(long id)
+        public static async Task<Result> Enroll(EnrollmentDto dto)
         {
-            Result result = await SendRequest<string>("/" + id, HttpMethod.Delete).ConfigureAwait(false);
+            Result result = await SendRequest<string>($"/{dto.Id}/enrollments", HttpMethod.Post, dto).ConfigureAwait(false);
+            return result;
+        }
+
+        public static async Task<Result> Transfer(TransferDto dto)
+        {
+            Result result = await SendRequest<string>($"/{dto.Id}/enrollments/{dto.EnrollmentNumber}", HttpMethod.Put, dto).ConfigureAwait(false);
+            return result;
+        }
+
+        public static async Task<Result> Disenroll(DisenrollmentDto dto)
+        {
+            Result result = await SendRequest<string>($"/{dto.Id}/enrollments/{dto.EnrollmentNumber}/deletion", HttpMethod.Post, dto).ConfigureAwait(false);
             return result;
         }
 
@@ -54,11 +72,10 @@ namespace UI.Api
 
             HttpResponseMessage message = await _client.SendAsync(request).ConfigureAwait(false);
             string response = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var envelope = JsonConvert.DeserializeObject<Envelope<T>>(response);
 
             if (message.StatusCode == HttpStatusCode.InternalServerError)
-                throw new Exception(response);
-
-            var envelope = JsonConvert.DeserializeObject<Envelope<T>>(response);
+                throw new Exception(envelope.ErrorMessage);
 
             if (!message.IsSuccessStatusCode)
                 return Result.Fail<T>(envelope.ErrorMessage);
