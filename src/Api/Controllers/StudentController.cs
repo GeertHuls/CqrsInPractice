@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Api.Dtos;
+using CSharpFunctionalExtensions;
+using Logic.AppServices;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -169,16 +171,12 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public IActionResult EditPersonalInfo(long id, [FromBody] StudentPersonalInfoDto dto)
         {
-            Student student = _studentRepository.GetById(id);
-            if (student == null)
-                return Error($"No student found for Id {id}");
+            var editPersonalInfoCommand = new EditPersonalInfoCommand(
+                id, dto.Name, dto.Email);
+            var handler = new EditPersonalInfoCommandHandler(_unitOfWork);
+            var result = handler.Handle(editPersonalInfoCommand);
 
-            student.Name = dto.Name;
-            student.Email = dto.Email;
-
-            _unitOfWork.Commit();
-
-            return Ok();
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
 
         private bool HasEnrollmentChanged(string newCourseName, string newGrade, Enrollment enrollment)
