@@ -64,40 +64,19 @@ namespace Api.Controllers
         [HttpDelete("{id}")]
         public IActionResult Unregister(long id)
         {
-            Student student = _studentRepository.GetById(id);
-            if (student == null)
-                return Error($"No student found for Id {id}");
+            var command = new UnregisterCommand(id);
 
-            _studentRepository.Delete(student);
-            _unitOfWork.Commit();
-
-            return Ok();
+            Result result = _messages.Dispatch(command);
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
 
         [HttpPost("{id}/enrollments")]
         public IActionResult Enroll(long id, [FromBody] StudentEnrollmentDto dto)
         {
-            Student student = _studentRepository.GetById(id);
-            if (student == null)
-                return Error($"No student found for Id {id}");
+            var command = new EnrollCommand(id, dto.Course, dto.Grade);
 
-            Course course = _courseRepository.GetByName(dto.Course);
-            if (course == null)
-            {
-                return Error($"Course is incorrect: '{dto.Course}'");
-            }
-
-            bool success = Enum.TryParse(dto.Grade, out Grade grade);
-            if (!success)
-            {
-                return Error($"Grade is incorrect: '{dto.Grade}'");
-            }
-
-            student.Enroll(course, grade);
-
-            _unitOfWork.Commit();
-
-            return Ok();
+            Result result = _messages.Dispatch(command);
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
 
         [HttpPost("{id}/enrollments/{enrollmentNumber}")]
