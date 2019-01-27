@@ -93,24 +93,10 @@ namespace Api.Controllers
         public IActionResult Disenroll(long id, int enrollmentNumber,
             [FromBody] StudentDisenrollmentDto dto)
         {
-            Student student = _studentRepository.GetById(id);
-            if (student == null)
-                return Error($"No student found for Id {id}");
+            var command = new DisenrollCommand(id, enrollmentNumber, dto.Comment);
 
-            if (string.IsNullOrWhiteSpace(dto.Comment))
-                return Error("Disenrollment comment is required");
-
-            Enrollment enrollment = student.GetEnrollment(enrollmentNumber);
-            if (enrollment == null)
-            {
-                return Error($"No enrollment found with number: '{enrollmentNumber}'");
-            }
-
-            student.RemoveEnrollment(enrollment, dto.Comment);
-
-            _unitOfWork.Commit();
-
-            return Ok();
+            Result result = _messages.Dispatch(command);
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
 
         [HttpPut("{id}")]
