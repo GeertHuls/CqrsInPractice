@@ -4,26 +4,16 @@ using Logic.AppServices;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NHibernate.Driver;
 
 namespace Api.Controllers
 {
     [Route("api/students")]
     public sealed class StudentController : BaseController
     {
-        private readonly UnitOfWork _unitOfWork;
         private readonly Messages _messages;
-        private readonly StudentRepository _studentRepository;
-        private readonly CourseRepository _courseRepository;
 
-        public StudentController(UnitOfWork unitOfWork, Messages messages)
+        public StudentController(Messages messages)
         {
-            _unitOfWork = unitOfWork;
-            _studentRepository = new StudentRepository(unitOfWork);
-            _courseRepository = new CourseRepository(unitOfWork);
             _messages = messages;
         }
 
@@ -58,7 +48,7 @@ namespace Api.Controllers
                 dto.Course2, dto.Course2Grade);
 
             Result result = _messages.Dispatch(command);
-            return result.IsSuccess ? Ok() : Error(result.Error);
+            return FromResult(result);
         }
 
         [HttpDelete("{id}")]
@@ -67,7 +57,7 @@ namespace Api.Controllers
             var command = new UnregisterCommand(id);
 
             Result result = _messages.Dispatch(command);
-            return result.IsSuccess ? Ok() : Error(result.Error);
+            return FromResult(result);
         }
 
         [HttpPost("{id}/enrollments")]
@@ -76,7 +66,7 @@ namespace Api.Controllers
             var command = new EnrollCommand(id, dto.Course, dto.Grade);
 
             Result result = _messages.Dispatch(command);
-            return result.IsSuccess ? Ok() : Error(result.Error);
+            return FromResult(result);
         }
 
         [HttpPost("{id}/enrollments/{enrollmentNumber}")]
@@ -86,7 +76,7 @@ namespace Api.Controllers
             var command = new TransferCommand(id, enrollmentNumber, dto.Course, dto.Grade);
 
             Result result = _messages.Dispatch(command);
-            return result.IsSuccess ? Ok() : Error(result.Error);
+            return FromResult(result);
         }
 
         [HttpPost("{id}/enrollments/{enrollmentNumber}/deletion")]
@@ -96,7 +86,7 @@ namespace Api.Controllers
             var command = new DisenrollCommand(id, enrollmentNumber, dto.Comment);
 
             Result result = _messages.Dispatch(command);
-            return result.IsSuccess ? Ok() : Error(result.Error);
+            return FromResult(result);
         }
 
         [HttpPut("{id}")]
@@ -106,18 +96,7 @@ namespace Api.Controllers
                 id, dto.Name, dto.Email);
             var result = _messages.Dispatch(editPersonalInfoCommand);
 
-            return result.IsSuccess ? Ok() : Error(result.Error);
-        }
-
-        private bool HasEnrollmentChanged(string newCourseName, string newGrade, Enrollment enrollment)
-        {
-            if (string.IsNullOrWhiteSpace(newCourseName) && enrollment == null)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(newCourseName) || enrollment == null)
-                return true;
-
-            return newCourseName != enrollment.Course.Name || newGrade != enrollment.Grade.ToString();
+            return FromResult(result);
         }
     }
 }
