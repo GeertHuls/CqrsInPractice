@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NHibernate.Driver;
 
 namespace Api.Controllers
 {
@@ -52,24 +53,12 @@ namespace Api.Controllers
         [HttpPost]
         public IActionResult Register([FromBody] NewStudentDto dto)
         {
-            var student = new Student(dto.Name, dto.Email);
+            var command = new RegisterCommand(dto.Name, dto.Email,
+                dto.Course1, dto.Course1Grade,
+                dto.Course2, dto.Course2Grade);
 
-            if (dto.Course1 != null && dto.Course1Grade != null)
-            {
-                Course course = _courseRepository.GetByName(dto.Course1);
-                student.Enroll(course, Enum.Parse<Grade>(dto.Course1Grade));
-            }
-
-            if (dto.Course2 != null && dto.Course2Grade != null)
-            {
-                Course course = _courseRepository.GetByName(dto.Course2);
-                student.Enroll(course, Enum.Parse<Grade>(dto.Course2Grade));
-            }
-
-            _studentRepository.Save(student);
-            _unitOfWork.Commit();
-
-            return Ok();
+            Result result = _messages.Dispatch(command);
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
 
         [HttpDelete("{id}")]
