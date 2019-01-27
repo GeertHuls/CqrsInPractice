@@ -14,14 +14,16 @@ namespace Api.Controllers
     public sealed class StudentController : BaseController
     {
         private readonly UnitOfWork _unitOfWork;
+        private readonly Messages _messages;
         private readonly StudentRepository _studentRepository;
         private readonly CourseRepository _courseRepository;
 
-        public StudentController(UnitOfWork unitOfWork)
+        public StudentController(UnitOfWork unitOfWork, Messages messages)
         {
             _unitOfWork = unitOfWork;
             _studentRepository = new StudentRepository(unitOfWork);
             _courseRepository = new CourseRepository(unitOfWork);
+            _messages = messages;
         }
 
         [HttpGet]
@@ -173,8 +175,7 @@ namespace Api.Controllers
         {
             var editPersonalInfoCommand = new EditPersonalInfoCommand(
                 id, dto.Name, dto.Email);
-            var handler = new EditPersonalInfoCommandHandler(_unitOfWork);
-            var result = handler.Handle(editPersonalInfoCommand);
+            var result = _messages.Dispatch(editPersonalInfoCommand);
 
             return result.IsSuccess ? Ok() : Error(result.Error);
         }
