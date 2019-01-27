@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Api.Dtos;
+﻿using Api.Dtos;
 using CSharpFunctionalExtensions;
 using Logic.AppServices;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Api.Controllers
 {
@@ -29,9 +29,8 @@ namespace Api.Controllers
         [HttpGet]
         public IActionResult GetList(string enrolled, int? number)
         {
-            IReadOnlyList<Student> students = _studentRepository.GetList(enrolled, number);
-            List<StudentDto> dtos = students.Select(x => ConvertToDto(x)).ToList();
-            return Ok(dtos);
+            var list = _messages.Dispatch(new GetListQuery(enrolled, number));
+            return Ok(list);
         }
 
         private StudentDto ConvertToDto(Student student)
