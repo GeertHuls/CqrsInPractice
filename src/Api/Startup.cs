@@ -1,6 +1,7 @@
 ﻿using Api.Dtos;
 using Api.Utils;
 using Logic.AppServices;
+using Logic.Decorators;
 using Logic.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -22,9 +23,15 @@ namespace Api
         {
             services.AddMvc();
 
+            var config = new Config(3);
+            services.AddSingleton(config);
+
             services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
             services.AddTransient<UnitOfWork>();
-            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>, EditPersonalInfoCommandHandler>();
+            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>>(provider =>
+                new DatabaseRetryDecorator<EditPersonalInfoCommand>(
+                    new EditPersonalInfoCommandHandler(provider.GetService<UnitOfWork>()),
+                    provider.GetService<Config>()));
             services.AddTransient<ICommandHandler<RegisterCommand>, RegisterCommandHandler>();
             services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
             services.AddTransient<ICommandHandler<EnrollCommand>, EnrollCommandHandler>();
