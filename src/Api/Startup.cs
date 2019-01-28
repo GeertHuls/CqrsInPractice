@@ -30,7 +30,7 @@ namespace Api
             services.AddTransient<UnitOfWork>();
             services.AddTransient<ICommandHandler<EditPersonalInfoCommand>>(provider =>
                 new DatabaseRetryDecorator<EditPersonalInfoCommand>(
-                    new EditPersonalInfoCommandHandler(provider.GetService<UnitOfWork>()),
+                    new EditPersonalInfoCommandHandler(provider.GetService<SessionFactory>()),
                     provider.GetService<Config>()));
             services.AddTransient<ICommandHandler<RegisterCommand>, RegisterCommandHandler>();
             services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();

@@ -20,7 +20,7 @@ namespace Logic.Decorators
 
         public Result Handle(TCommand command)
         {
-            for (int i = 0; i < _config.NumberOfDatabaseRetries; i++)
+            for (int i = 0; ; i++)
             {
                 try
                 {
@@ -35,8 +35,6 @@ namespace Logic.Decorators
                     }
                 }
             }
-
-            throw new InvalidOperationException("Error handling command.");
         }
 
         private bool IsDatabaseException(Exception exception)
