@@ -1,12 +1,8 @@
-﻿using Api.Dtos;
-using Api.Utils;
-using Logic.AppServices;
-using Logic.Decorators;
+﻿using Api.Utils;
 using Logic.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
 
 namespace Api
 {
@@ -27,19 +23,8 @@ namespace Api
             services.AddSingleton(config);
 
             services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
-            services.AddTransient<UnitOfWork>();
-            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>>(provider =>
-                new AuditLoggingDecorator<EditPersonalInfoCommand>(
-                    new DatabaseRetryDecorator<EditPersonalInfoCommand>(
-                        new EditPersonalInfoCommandHandler(provider.GetService<SessionFactory>()),
-                        provider.GetService<Config>())));
-            services.AddTransient<ICommandHandler<RegisterCommand>, RegisterCommandHandler>();
-            services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
-            services.AddTransient<ICommandHandler<EnrollCommand>, EnrollCommandHandler>();
-            services.AddTransient<ICommandHandler<TransferCommand>, TransferCommandHandler>();
-            services.AddTransient<ICommandHandler<DisenrollCommand>, DisenrollCommandHandler>();
-            services.AddTransient<IQueryHandler<GetListQuery, List<StudentDto>>, GetListQueryHandler>();
             services.AddSingleton<Messages>();
+            services.AddHandlers();
         }
 
         public void Configure(IApplicationBuilder app)

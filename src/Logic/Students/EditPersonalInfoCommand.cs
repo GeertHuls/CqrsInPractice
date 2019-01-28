@@ -5,6 +5,7 @@ using Logic.Students;
 using Logic.Utils;
 using System.Collections.Generic;
 using System.Linq;
+using Logic.Decorators;
 
 namespace Logic.AppServices
 {
@@ -40,16 +41,17 @@ namespace Logic.AppServices
 
     public sealed class GetListQueryHandler : IQueryHandler<GetListQuery, List<StudentDto>>
     {
-        private readonly UnitOfWork _unitOfWork;
+        private readonly SessionFactory _sessionFactory;
 
-        public GetListQueryHandler(UnitOfWork unitOfWork)
+        public GetListQueryHandler(SessionFactory sessionFactory)
         {
-            _unitOfWork = unitOfWork;
+            _sessionFactory = sessionFactory;
         }
 
         public List<StudentDto> Handle(GetListQuery query)
         {
-            return new StudentRepository(_unitOfWork)
+            var unitOfWork = new UnitOfWork(_sessionFactory);
+            return new StudentRepository(unitOfWork)
                 .GetList(query.EnrolledIn, query.NumberOfCources)
                 .Select(x => ConvertToDto(x))
                 .ToList();
@@ -86,6 +88,8 @@ namespace Logic.AppServices
         }
     }
 
+    [DatabaseRetry]
+    [AuditLog]
     public sealed class EditPersonalInfoCommandHandler : ICommandHandler<EditPersonalInfoCommand>
     {
         private readonly SessionFactory _sessionFactory;
@@ -133,19 +137,21 @@ namespace Logic.AppServices
         }
     }
 
+    [AuditLog]
     public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand>
     {
-        private readonly UnitOfWork _unitOfWork;
+        private readonly SessionFactory _sessionFactory;
 
-        public RegisterCommandHandler(UnitOfWork unitOfWork)
+        public RegisterCommandHandler(SessionFactory sessionFactory)
         {
-            _unitOfWork = unitOfWork;
+            _sessionFactory = sessionFactory;
         }
 
         public Result Handle(RegisterCommand command)
         {
-            var courseRepository = new CourseRepository(_unitOfWork);
-            var studentRepository = new StudentRepository(_unitOfWork);
+            var unitOfWork = new UnitOfWork(_sessionFactory);
+            var courseRepository = new CourseRepository(unitOfWork);
+            var studentRepository = new StudentRepository(unitOfWork);
 
             var student = new Student(command.Name, command.Email);
 
@@ -162,7 +168,7 @@ namespace Logic.AppServices
             }
 
             studentRepository.Save(student);
-            _unitOfWork.Commit();
+            unitOfWork.Commit();
 
             return Result.Ok();
         }
@@ -180,21 +186,23 @@ namespace Logic.AppServices
 
     public sealed class UnregisterCommandHandler : ICommandHandler<UnregisterCommand>
     {
-        private readonly UnitOfWork _unitOfWork;
+        private readonly SessionFactory _sessionFactory;
 
-        public UnregisterCommandHandler(UnitOfWork unitOfWork)
+        public UnregisterCommandHandler(SessionFactory sessionFactory)
         {
-            _unitOfWork = unitOfWork;
+            _sessionFactory = sessionFactory;
         }
+
         public Result Handle(UnregisterCommand command)
         {
-            var repository = new StudentRepository(_unitOfWork);
+            var unitOfWork = new UnitOfWork(_sessionFactory);
+            var repository = new StudentRepository(unitOfWork);
             Student student = repository.GetById(command.Id);
             if (student == null)
                 return Result.Fail($"No student found for Id {command.Id}");
 
             repository.Delete(student);
-            _unitOfWork.Commit();
+            unitOfWork.Commit();
 
             return Result.Ok();
         }
@@ -216,17 +224,18 @@ namespace Logic.AppServices
 
     public sealed class EnrollCommandHandler : ICommandHandler<EnrollCommand>
     {
-        private readonly UnitOfWork _unitOfWork;
+        private readonly SessionFactory _sessionFactory;
 
-        public EnrollCommandHandler(UnitOfWork unitOfWork)
+        public EnrollCommandHandler(SessionFactory sessionFactory)
         {
-            _unitOfWork = unitOfWork;
+            _sessionFactory = sessionFactory;
         }
 
         public Result Handle(EnrollCommand command)
         {
-            var courseRepository = new CourseRepository(_unitOfWork);
-            var studentRepository = new StudentRepository(_unitOfWork);
+            var unitOfWork = new UnitOfWork(_sessionFactory);
+            var courseRepository = new CourseRepository(unitOfWork);
+            var studentRepository = new StudentRepository(unitOfWork);
             Student student = studentRepository.GetById(command.Id);
             if (student == null)
                 return Result.Fail($"No student found with Id '{command.Id}'");
@@ -241,7 +250,7 @@ namespace Logic.AppServices
 
             student.Enroll(course, grade);
 
-            _unitOfWork.Commit();
+            unitOfWork.Commit();
 
             return Result.Ok();
         }
@@ -265,17 +274,18 @@ namespace Logic.AppServices
 
     public sealed class TransferCommandHandler : ICommandHandler<TransferCommand>
     {
-        private readonly UnitOfWork _unitOfWork;
+        private readonly SessionFactory _sessionFactory;
 
-        public TransferCommandHandler(UnitOfWork unitOfWork)
+        public TransferCommandHandler(SessionFactory sessionFactory)
         {
-            _unitOfWork = unitOfWork;
+            _sessionFactory = sessionFactory;
         }
 
         public Result Handle(TransferCommand command)
         {
-            var courseRepository = new CourseRepository(_unitOfWork);
-            var studentRepository = new StudentRepository(_unitOfWork);
+            var unitOfWork = new UnitOfWork(_sessionFactory);
+            var courseRepository = new CourseRepository(unitOfWork);
+            var studentRepository = new StudentRepository(unitOfWork);
             Student student = studentRepository.GetById(command.Id);
             if (student == null)
                 return Result.Fail($"No student found with Id '{command.Id}'");
@@ -294,7 +304,7 @@ namespace Logic.AppServices
 
             enrollment.Update(course, grade);
 
-            _unitOfWork.Commit();
+            unitOfWork.Commit();
 
             return Result.Ok();
         }
@@ -316,16 +326,17 @@ namespace Logic.AppServices
 
     public sealed class DisenrollCommandHandler : ICommandHandler<DisenrollCommand>
     {
-        private readonly UnitOfWork _unitOfWork;
+        private readonly SessionFactory _sessionFactory;
 
-        public DisenrollCommandHandler(UnitOfWork unitOfWork)
+        public DisenrollCommandHandler(SessionFactory sessionFactory)
         {
-            _unitOfWork = unitOfWork;
+            _sessionFactory = sessionFactory;
         }
 
         public Result Handle(DisenrollCommand command)
         {
-            var studentRepository = new StudentRepository(_unitOfWork);
+            var unitOfWork = new UnitOfWork(_sessionFactory);
+            var studentRepository = new StudentRepository(unitOfWork);
             Student student = studentRepository.GetById(command.Id);
             if (student == null)
                 return Result.Fail($"No student found for Id {command.Id}");
@@ -339,7 +350,7 @@ namespace Logic.AppServices
 
             student.RemoveEnrollment(enrollment, command.Comment);
 
-            _unitOfWork.Commit();
+            unitOfWork.Commit();
 
             return Result.Ok();
         }
