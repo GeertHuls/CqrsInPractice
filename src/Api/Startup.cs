@@ -22,7 +22,10 @@ namespace Api
             var config = new Config(3);
             services.AddSingleton(config);
 
-            services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
+            var connectionString = new ConnectionString(Configuration["ConnectionString"]);
+            services.AddSingleton(connectionString);
+
+            services.AddSingleton<SessionFactory>();
             services.AddSingleton<Messages>();
             services.AddHandlers();
         }
