@@ -1,6 +1,5 @@
 ﻿using Api.Dtos;
 using Dapper;
-using Logic.Students;
 using Logic.Utils;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -21,96 +20,39 @@ namespace Logic.AppServices
 
         internal sealed class GetListQueryHandler : IQueryHandler<GetListQuery, List<StudentDto>>
         {
-            private readonly ConnectionString _connectionString;
+            private readonly QueriesConnectionString _queriesConnectionString;
 
-            public GetListQueryHandler(ConnectionString connectionString)
+            public GetListQueryHandler(QueriesConnectionString queriesConnectionString)
             {
-                _connectionString = connectionString;
+                _queriesConnectionString = queriesConnectionString;
             }
 
             public List<StudentDto> Handle(GetListQuery query)
             {
                 string sql = @"
-                    SELECT s.*, e.Grade, c.Name CourseName, c.Credits
+                    SELECT s.StudentID Id, s.Name, s.Email,
+	                    s.FirstCourseName Course1, s.FirstCourseCredits Course1Credits, s.FirstCourseGrade Course1Grade,
+	                    s.SecondCourseName Course2, s.SecondCourseCredits Course2Credits, s.SecondCourseGrade Course2Grade
                     FROM dbo.Student s
-                    LEFT JOIN (
-                        SELECT e.StudentID, COUNT(*) Number
-                        FROM dbo.Enrollment e
-                        GROUP BY e.StudentID) t on s.StudentId = t.StudentID
-                    LEFT JOIN dbo.Enrollment e ON e.StudentID = s.StudentID
-                    LEFT JOIN dbo.Course c on e.CourseID = c.CourseID
-                    WHERE (c.Name = @Course OR @Course IS NULL)
-                        AND (ISNULL(t.Number, 0) = @Number OR @Number IS NULL)
+                    WHERE (s.FirstCourseName = @Course
+		                    OR s.SecondCourseName = @Course
+		                    OR @Course IS NULL)
+                        AND (s.NumberOfEnrollments = @Number
+                            OR @Number IS NULL)
                     ORDER BY s.StudentID ASC";
 
-                using (SqlConnection connection = new SqlConnection(_connectionString.Value))
+                using (SqlConnection connection = new SqlConnection(_queriesConnectionString.Value))
                 {
-                    var students = connection
-                        .Query<StudentInDB>(sql, new
+                    List<StudentDto> students = connection
+                        .Query<StudentDto>(sql, new
                         {
                             Course = query.EnrolledIn,
                             Number = query.NumberOfCourses
                         })
                         .ToList();
 
-                    var ids = students
-                        .GroupBy(x => x.StudentId)
-                        .Select(x => x.Key)
-                        .ToList();
-
-
-                    var results = new List<StudentDto>();
-
-                    foreach (var id in ids)
-                    {
-                        var data = students
-                            .Where(x => x.StudentId == id)
-                            .ToList();
-
-                        var dto = new StudentDto
-                        {
-                            Id = data[0].StudentId,
-                            Name = data[0].Name,
-                            Email = data[0].Email,
-                            Course1 = data[0].CourseName,
-                            Course1Credits = data[0].Credits,
-                            Course1Grade = data[0]?.Grade.ToString()
-                        };
-
-                        if (data.Count > 1)
-                        {
-                            dto.Course2 = data[1].CourseName;
-                            dto.Course2Credits = data[1].Credits;
-                            dto.Course2Grade = data[1]?.Grade.ToString();
-                        }
-
-                        results.Add(dto);
-                    }
-
-                    return results;
+                    return students;
                 }
-            }
-
-            private class StudentInDB
-            {
-                public readonly long StudentId;
-                public readonly string Name;
-                public readonly string Email;
-                public readonly Grade? Grade;
-                public readonly string CourseName;
-                public readonly int? Credits;
-
-                public StudentInDB(long studentId, string name, string email,
-                    Grade? grade, string courseName, int? credits)
-                {
-                    StudentId = studentId;
-                    Name = name;
-                    Email = email;
-                    Grade = grade;
-                    CourseName = courseName;
-                    Credits = credits;
-                }
-                
             }
         }
     }

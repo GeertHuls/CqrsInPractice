@@ -22,8 +22,10 @@ namespace Api
             var config = new Config(3);
             services.AddSingleton(config);
 
-            var connectionString = new ConnectionString(Configuration["ConnectionString"]);
-            services.AddSingleton(connectionString);
+            var commandsConnectionString = new CommandsConnectionString(Configuration["CommandsConnectionString"]);
+            var queriesConnectionString = new QueriesConnectionString(Configuration["QueriesConnectionString"]);
+            services.AddSingleton(commandsConnectionString);
+            services.AddSingleton(queriesConnectionString);
 
             services.AddSingleton<SessionFactory>();
             services.AddSingleton<Messages>();
